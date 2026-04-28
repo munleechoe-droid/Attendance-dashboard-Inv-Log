@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance Dashboard — Logistic &amp; Inventory</title>
+<style>
+/* ── Login screen ── */
+#login-screen{position:fixed;inset:0;background:#1a2332;display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;border-radius:16px;padding:40px 36px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center}
+.login-logo{font-size:32px;margin-bottom:8px}
+.login-title{font-size:17px;font-weight:700;color:#1a2332;margin-bottom:4px}
+.login-sub{font-size:12px;color:#868e96;margin-bottom:28px}
+.login-input-wrap{position:relative;margin-bottom:12px}
+.login-input-wrap input{width:100%;padding:11px 42px 11px 14px;border:1.5px solid #dee2e6;border-radius:8px;font-size:13px;outline:none;transition:border .2s;color:#1a2332}
+.login-input-wrap input:focus{border-color:#2196F3}
+.login-input-wrap input.error{border-color:#F44336;animation:shake .3s}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#adb5bd;font-size:16px;padding:0;line-height:1}
+.eye-btn:hover{color:#495057}
+.login-btn{width:100%;padding:12px;background:#1a2332;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;margin-top:4px}
+.login-btn:hover{background:#2196F3}
+.login-btn:active{transform:scale(.98)}
+.login-error{font-size:12px;color:#F44336;margin-top:8px;min-height:16px}
+.login-hint{font-size:11px;color:#ced4da;margin-top:16px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f5f7fa;color:#1a2332;min-height:100vh}
+.header{background:#1a2332;color:#fff;padding:13px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:110}
+.header h1{font-size:15px;font-weight:600}
+.header-right{font-size:11px;opacity:.45}
+.tabs{background:#243447;display:flex;padding:0 20px;overflow-x:auto;position:sticky;top:40px;z-index:100}
+.tab{padding:10px 18px;font-size:12px;color:#8ab;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tab:hover{color:#fff}.tab.active{color:#fff;border-bottom-color:#2196F3}
+.filter-bar{background:#fff;padding:8px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #e9ecef;position:sticky;top:83px;z-index:99}
+.flt{display:flex;align-items:center;gap:5px}
+.flt label{font-size:11px;color:#868e96;font-weight:500;white-space:nowrap}
+select.single{font-size:11px;padding:4px 7px;border-radius:6px;border:1px solid #dee2e6;background:#fff;cursor:pointer;outline:none}
+select.single:focus{border-color:#2196F3}
+.ms-wrap{position:relative}
+.ms-btn{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid #dee2e6;background:#fff;cursor:pointer;display:flex;align-items:center;gap:5px;min-width:100px;max-width:170px;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-btn:hover,.ms-btn.active{border-color:#2196F3}
+.ms-arrow{margin-left:auto;font-size:9px;opacity:.5;flex-shrink:0}
+.ms-badge{background:#2196F3;color:#fff;border-radius:10px;font-size:9px;padding:1px 5px;font-weight:700;flex-shrink:0}
+.ms-dropdown{display:none;position:absolute;top:calc(100%+3px);left:0;background:#fff;border:1px solid #dee2e6;border-radius:8px;z-index:200;min-width:210px;max-width:270px;box-shadow:0 4px 16px rgba(0,0,0,.12);overflow:hidden}
+.ms-dropdown.open{display:block}
+.ms-search{padding:7px 9px;border-bottom:1px solid #f1f3f5}
+.ms-search input{width:100%;font-size:11px;padding:3px 7px;border:1px solid #dee2e6;border-radius:4px;outline:none}
+.ms-list{max-height:200px;overflow-y:auto}
+.ms-item{display:flex;align-items:center;gap:7px;padding:5px 10px;cursor:pointer;font-size:11px;color:#343a40}
+.ms-item:hover{background:#f8fafc}
+.ms-item.select-all{border-bottom:1px solid #f1f3f5;font-weight:500}
+.ms-item input[type=checkbox]{cursor:pointer;accent-color:#2196F3}
+.date-tabs{display:flex;gap:4px}
+.date-tab{padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid #dee2e6;background:#fff;color:#868e96}
+.date-tab.active{background:#2196F3;color:#fff;border-color:#2196F3}
+.date-subfilter{display:none;align-items:center;gap:5px}
+.date-subfilter.visible{display:flex}
+.btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #dee2e6;background:#fff;color:#868e96;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#f8fafc;color:#1a2332}
+.btn-dark{background:#1a2332;color:#fff;border-color:#1a2332}
+.btn-dark:hover{background:#243447;color:#fff}
+.export-menu{position:relative}
+.export-dd{display:none;position:absolute;top:calc(100%+3px);right:0;background:#fff;border:1px solid #dee2e6;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:200;min-width:130px;overflow:hidden}
+.export-dd.open{display:block}
+.exp-item{padding:8px 13px;font-size:11px;color:#343a40;cursor:pointer}
+.exp-item:hover{background:#f8fafc}
+.exp-item+.exp-item{border-top:1px solid #f1f3f5}
+.toggle-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:#868e96}
+.toggle-track{position:relative;width:32px;height:18px;background:#dee2e6;border-radius:9px;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle-track.on{background:#2196F3}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-track.on .toggle-thumb{transform:translateX(14px)}
+.legend{background:#f8fafc;padding:5px 20px;display:flex;gap:12px;flex-wrap:wrap;border-bottom:1px solid #e9ecef;align-items:center;position:sticky;top:127px;z-index:98}
+.leg{display:flex;align-items:center;gap:3px;font-size:11px;color:#495057}
+.leg-dot{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+.content{padding:14px 20px}
+.pane{display:none}.pane.active{display:block}
+.kpi-row{display:flex;gap:9px;margin-bottom:13px;flex-wrap:wrap;position:sticky;top:83px;z-index:90;background:#f5f7fa;padding:8px 0 4px 0;margin-top:-8px}
+.kpi{background:#fff;border-radius:8px;padding:10px 13px;flex:1;min-width:90px;border:.5px solid #e9ecef}
+.kpi-val{font-size:20px;font-weight:700}
+.kpi-lbl{font-size:10px;color:#868e96;margin-top:2px}
+.tbl-wrap{background:#fff;border-radius:8px;border:.5px solid #e9ecef;overflow:visible}
+.tbl-scroll{overflow:auto;max-height:calc(100vh - 310px);border-radius:8px}
+table.stbl{width:100%;border-collapse:collapse;font-size:12px}
+table.stbl th{padding:8px 11px;text-align:left;background:#f8fafc;font-weight:600;font-size:11px;color:#495057;border-bottom:1px solid #dee2e6;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;z-index:2}
+table.stbl th:hover{background:#f1f3f5}
+table.stbl td{padding:7px 11px;border-bottom:.5px solid #f1f3f5;color:#343a40;white-space:nowrap}
+table.stbl tr:last-child td{border-bottom:none}
+table.stbl tr:hover td{background:#f8fafc}
+.ap{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.hi{background:#e8f5e9;color:#2e7d32}.mid{background:#fff8e1;color:#f57f17}.lo{background:#ffebee;color:#c62828}
+.gr{background:#e8f5e9;color:#2e7d32}.am{background:#fff8e1;color:#f57f17}.rd{background:#ffebee;color:#c62828}
+.sa{font-size:9px;margin-left:2px;opacity:.5}
+/* Heatmap */
+.heat-wrap{background:#fff;border-radius:8px;border:.5px solid #e9ecef;overflow:hidden}
+.heat-scroll{overflow:auto;max-height:calc(100vh - 200px)}
+table.htbl{border-collapse:collapse;font-size:10px;white-space:nowrap}
+.hcol-name{min-width:150px;width:150px;position:sticky;left:0;z-index:4;background:#f8fafc;border-right:2px solid #dee2e6}
+.hcol-info{min-width:130px;width:130px;position:sticky;left:150px;z-index:4;background:#f8fafc;border-right:2px solid #dee2e6}
+th.hcol-name,th.hcol-info{padding:5px 8px;font-size:11px;font-weight:600;color:#495057;border-bottom:1px solid #dee2e6;text-align:left;position:sticky;top:0;z-index:6}
+th.hdc{position:sticky;top:0;z-index:5}
+td.hcol-name{padding:3px 8px;font-size:10px;color:#343a40;background:#fff;border-bottom:.5px solid #f1f3f5}
+td.hcol-info{padding:2px 6px;font-size:9px;color:#495057;background:#fff;border-bottom:.5px solid #f1f3f5}
+td.hcol-info span{font-size:8px;color:#adb5bd;display:block;overflow:hidden;text-overflow:ellipsis;max-width:128px}
+tr:hover td.hcol-name,tr:hover td.hcol-info{background:#f8fafc}
+.hdc{min-width:32px;width:32px;text-align:center;padding:2px 1px;background:#f8fafc;border-bottom:1px solid #dee2e6;border-left:.5px solid #f1f3f5}
+.hdc.wk{background:#f1f3f5}
+.hdn{font-size:10px;font-weight:600;color:#343a40;line-height:1.2}
+.hdw{font-size:8px;color:#adb5bd}
+/* Shift header rows */
+tr.shift-hdr{background:#f0f4ff}
+tr.shift-hdr td.hcol-name{background:#f0f4ff;font-size:9px;font-weight:700;color:#3d5afe;padding:3px 8px;border-bottom:1px solid #e3e8ff}
+tr.shift-hdr td.hcol-info{background:#f0f4ff;font-size:8px;color:#9fa8da;padding:2px 6px;border-bottom:1px solid #e3e8ff}
+.shift-hc{text-align:center;font-size:9px;font-weight:700;color:#3d5afe;vertical-align:middle;background:#f0f4ff;border-bottom:1px solid #e3e8ff;border-left:.5px solid #e3e8ff;height:20px}
+.shift-hc.empty{color:#c5cae9}
+.shift-hc.wk{background:#e8ecff}
+/* Day cells */
+.tdc{width:32px;min-width:32px;height:24px;text-align:center;vertical-align:middle;border-bottom:.5px solid #f1f3f5;border-left:.5px solid rgba(0,0,0,.03)}
+tr:hover .tdc{filter:brightness(.91)}
+.ci{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:1px}
+.sl{font-size:9px;font-weight:700;line-height:1}
+.hl{font-size:7px;line-height:1;opacity:.85;display:none;overflow:hidden;max-width:30px;text-overflow:ellipsis}
+.P{background:#4CAF50;color:#fff}.PL{background:#FFC107;color:#5d3a00}
+.SP{background:#FF9800;color:#fff}.L{background:#2196F3;color:#fff}
+.A{background:#F44336;color:#fff}.N{background:#f0f2f5;color:#ced4da}.N.wk{background:#e9ecef}
+.PRE{background:#546e7a;color:#fff}.PRE.wk{background:#455a64}
+.POST{background:#546e7a;color:#fff}.POST.wk{background:#455a64}
+.W{background:#e3f2fd;color:#1565c0;font-style:italic}.W.wk{background:#dde9f5}
+.R{background:#ede7f6;color:#6a1b9a;font-style:italic}.R.wk{background:#e5ddf0}
+/* Pre-join: light purple; Post-exit: light brown/grey */
+.NJ{background:#f3e5f5;color:#ce93d8}.NJ.wk{background:#ede7f6}
+.EX{background:#efebe9;color:#bcaaa4}.EX.wk{background:#e8e0dc}
+.NJ{background:repeating-linear-gradient(135deg,#f0f4ff,#f0f4ff 3px,#e3eaff 3px,#e3eaff 6px);color:#9fa8da}
+.EX{background:repeating-linear-gradient(135deg,#fafafa,#fafafa 3px,#f0f0f0 3px,#f0f0f0 6px);color:#bdbdbd}
+.no-data{text-align:center;padding:40px;color:#868e96;font-size:13px}
+/* Org */
+.org-scroll{overflow:auto;padding:16px 0}
+.tree-col{display:flex;flex-direction:column;align-items:center;position:relative}
+.tree-col-connector{width:1px;height:20px;background:#dee2e6;margin:0 auto}
+.org-card{background:#fff;border:.5px solid #dee2e6;border-radius:10px;padding:9px 11px;min-width:145px;max-width:170px;text-align:center;cursor:default;transition:box-shadow .15s;position:relative;flex-shrink:0}
+.org-card:hover{box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.org-card.has-ch{cursor:pointer}
+.oc-name{font-size:10px;font-weight:600;color:#1a2332;line-height:1.3;margin-bottom:2px}
+.oc-desig{font-size:8px;color:#868e96;margin-bottom:4px;line-height:1.3}
+.oc-att{font-size:13px;font-weight:700;margin-bottom:3px}
+.oc-meta{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.oc-badge{font-size:8px;padding:1px 5px;border-radius:8px;background:#f1f3f5;color:#495057}
+.org-card.lv0{border-top:3px solid #9C27B0}.org-card.lv1{border-top:3px solid #2196F3}
+.org-card.lv2{border-top:3px solid #4CAF50}.org-card.lv3{border-top:3px solid #FF9800}
+.oc-att.hi{color:#4CAF50}.oc-att.mid{color:#FF9800}.oc-att.lo{color:#F44336}
+.toggle-ch{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;background:#2196F3;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;font-weight:700}
+.footer{text-align:center;padding:12px;font-size:11px;color:#ced4da}
+</style>
+<script>
+// Login gate — runs before data.js, completely isolated
+function doLogin(){
+  var pw=document.getElementById('pw-input').value;
+  var inp=document.getElementById('pw-input');
+  var err=document.getElementById('login-error');
+  if(!pw){err.textContent='Please enter a password.';return;}
+  if(pw==='invlogteam123'){
+    try{sessionStorage.setItem('att_auth','1');}catch(e){}
+    var ls=document.getElementById('login-screen');
+    ls.style.transition='opacity .4s';ls.style.opacity='0';
+    setTimeout(function(){
+      ls.style.display='none';
+      if(typeof initDashboard==='function') initDashboard();
+    },400);
+  } else {
+    err.textContent='Incorrect password. Please try again.';
+    inp.classList.add('error');
+    setTimeout(function(){inp.classList.remove('error');inp.value='';inp.focus();},500);
+  }
+}
+function togglePw(){
+  var i=document.getElementById('pw-input');
+  i.type=i.type==='password'?'text':'password';
+}
+window.addEventListener('load',function(){
+  try{
+    if(sessionStorage.getItem('att_auth')==='1'){
+      document.getElementById('login-screen').style.display='none';
+      if(typeof initDashboard==='function') initDashboard();
+      return;
+    }
+  }catch(e){}
+  var i=document.getElementById('pw-input');
+  if(i) i.focus();
+});
+</script>
+</head>
+<body>
+
+<!-- Login screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">📅</div>
+    <div class="login-title">Attendance Dashboard</div>
+    <div class="login-sub">Enter password to continue</div>
+    <div class="login-input-wrap">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="eye-btn" onclick="togglePw()" title="Show/hide password">👁</button>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-hint">Authorised users only</div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>📅 Attendance Dashboard — Logistic &amp; Inventory</h1>
+  <div class="header-right" id="gen-time">Loading...</div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('summary',this)">📈 Summary</div>
+  <div class="tab" onclick="switchTab('weekly',this)">📊 Weekly Analysis</div>
+  <div class="tab" onclick="switchTab('daily',this)">📅 Daily Heatmap</div>
+  <div class="tab" onclick="switchTab('org',this)">🏢 Org Chart</div>
+</div>
+
+<div class="filter-bar">
+  <div class="flt">
+    <label>Period</label>
+    <div class="date-tabs">
+      <div class="date-tab active" onclick="setDateMode('month',this)">Month</div>
+      <div class="date-tab" onclick="setDateMode('quarter',this)">Quarter</div>
+      <div class="date-tab" onclick="setDateMode('week',this)">Week</div>
+      <div class="date-tab" onclick="setDateMode('year',this)">Year</div>
+    </div>
+  </div>
+  <div class="flt"><label>Year</label><select class="single" id="f-year" onchange="applyFilters()"></select></div>
+  <div class="date-subfilter visible" id="sf-month">
+    <label style="font-size:11px;color:#868e96;font-weight:500">Month</label>
+    <select class="single" id="f-month" onchange="applyFilters()"><option value="">(All)</option></select>
+  </div>
+  <div class="date-subfilter" id="sf-quarter">
+    <label style="font-size:11px;color:#868e96;font-weight:500">Quarter</label>
+    <select class="single" id="f-quarter" onchange="applyFilters()">
+      <option value="">(All)</option><option>1</option><option>2</option><option>3</option><option>4</option>
+    </select>
+  </div>
+  <div class="date-subfilter" id="sf-week">
+    <label style="font-size:11px;color:#868e96;font-weight:500">Week</label>
+    <select class="single" id="f-week" onchange="applyFilters()"><option value="">(All)</option></select>
+  </div>
+  <div class="flt">
+    <label>Dept</label>
+    <div class="ms-wrap" id="ms-dept">
+      <div class="ms-btn" onclick="toggleMs('ms-dept')"><span id="ms-dept-label">All</span><span class="ms-badge" id="ms-dept-badge" style="display:none">0</span><span class="ms-arrow">▾</span></div>
+      <div class="ms-dropdown" id="ms-dept-dd"><div class="ms-search"><input type="text" placeholder="Search..." oninput="filterMsSearch(this,'ms-dept')"></div><div class="ms-list" id="ms-dept-list"></div></div>
+    </div>
+  </div>
+  <div class="flt">
+    <label>Branch</label>
+    <div class="ms-wrap" id="ms-branch">
+      <div class="ms-btn" onclick="toggleMs('ms-branch')"><span id="ms-branch-label">All</span><span class="ms-badge" id="ms-branch-badge" style="display:none">0</span><span class="ms-arrow">▾</span></div>
+      <div class="ms-dropdown" id="ms-branch-dd"><div class="ms-search"><input type="text" placeholder="Search..." oninput="filterMsSearch(this,'ms-branch')"></div><div class="ms-list" id="ms-branch-list"></div></div>
+    </div>
+  </div>
+  <div class="flt">
+    <label>Designation</label>
+    <div class="ms-wrap" id="ms-desig">
+      <div class="ms-btn" onclick="toggleMs('ms-desig')"><span id="ms-desig-label">All</span><span class="ms-badge" id="ms-desig-badge" style="display:none">0</span><span class="ms-arrow">▾</span></div>
+      <div class="ms-dropdown" id="ms-desig-dd"><div class="ms-search"><input type="text" placeholder="Search..." oninput="filterMsSearch(this,'ms-desig')"></div><div class="ms-list" id="ms-desig-list"></div></div>
+    </div>
+  </div>
+  <button class="btn" onclick="resetFilters()">Reset</button>
+  <div class="export-menu" style="margin-left:auto" id="export-wrap">
+    <button class="btn btn-dark" onclick="toggleExportMenu()">⬇ Export ▾</button>
+    <div class="export-dd" id="export-dd">
+      <div class="exp-item" onclick="doExport('csv')">📄 CSV</div>
+      <div class="exp-item" onclick="doExport('xlsx')">📊 Excel</div>
+    </div>
+  </div>
+  <div class="toggle-wrap" id="shift-wrap" style="display:none">
+    <span>Shift rows</span>
+    <div class="toggle-track" id="shift-tog" onclick="toggleShift()"><div class="toggle-thumb"></div></div>
+    <span id="shift-lbl">Off</span>
+  </div>
+</div>
+
+<div class="legend" id="heat-legend" style="display:none">
+  <div class="leg"><div class="leg-dot P"></div>Present</div>
+  <div class="leg"><div class="leg-dot PL"></div>Late</div>
+  <div class="leg"><div class="leg-dot SP"></div>Single punch</div>
+  <div class="leg"><div class="leg-dot L"></div>On leave</div>
+  <div class="leg"><div class="leg-dot A"></div>Absent</div>
+  <div class="leg"><div class="leg-dot N"></div>Non-working</div>
+  <div class="leg"><div class="leg-dot PRE"></div>Not yet joined / Already left</div>
+  <div class="leg"><div class="leg-dot W"></div>Roster: Work day</div>
+  <div class="leg"><div class="leg-dot R"></div>Roster: Rest day</div>
+  <div class="leg" style="margin-left:auto;font-size:10px;color:#3d5afe;font-weight:500">🔵 Shift rows = headcount per shift per day (toggle On)</div>
+</div>
+
+<div class="content">
+  <!-- SUMMARY -->
+  <div class="pane active" id="pane-summary">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val" id="k-emp">—</div><div class="kpi-lbl">Employees</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-att" style="color:#4CAF50">—</div><div class="kpi-lbl">Avg Attendance</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-absent" style="color:#F44336">—</div><div class="kpi-lbl">Absent</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-late" style="color:#FFC107">—</div><div class="kpi-lbl">Late</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-sp" style="color:#FF9800">—</div><div class="kpi-lbl">Single Punch</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-leave" style="color:#2196F3">—</div><div class="kpi-lbl">On Leave</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-wd">—</div><div class="kpi-lbl">Working Days</div></div>
+    </div>
+    <div class="tbl-wrap"><div class="tbl-scroll">
+      <table class="stbl"><thead><tr>
+        <th onclick="sortTable('dept')">Dept<span class="sa" id="s-dept">▼</span></th>
+        <th onclick="sortTable('branch')">Branch<span class="sa" id="s-branch"></span></th>
+        <th onclick="sortTable('desig')">Designation<span class="sa" id="s-desig"></span></th>
+        <th onclick="sortTable('Month_Label')">Period<span class="sa" id="s-Month_Label"></span></th>
+        <th onclick="sortTable('emp')">Emp<span class="sa" id="s-emp"></span></th>
+        <th onclick="sortTable('wd')">WD<span class="sa" id="s-wd"></span></th>
+        <th onclick="sortTable('present')">Present<span class="sa" id="s-present"></span></th>
+        <th onclick="sortTable('absent')">Absent<span class="sa" id="s-absent"></span></th>
+        <th onclick="sortTable('late')">Late<span class="sa" id="s-late"></span></th>
+        <th onclick="sortTable('sp')">SP<span class="sa" id="s-sp"></span></th>
+        <th onclick="sortTable('leave')">Leave<span class="sa" id="s-leave"></span></th>
+        <th onclick="sortTable('att')">Att%<span class="sa" id="s-att"></span></th>
+      </tr></thead><tbody id="sum-body"></tbody></table>
+    </div></div>
+  </div>
+
+  <!-- WEEKLY ANALYSIS -->
+  <div class="pane" id="pane-weekly">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val" id="wk-emp">—</div><div class="kpi-lbl">Employees</div></div>
+      <div class="kpi"><div class="kpi-val" id="wk-avg-hrs" style="color:#2196F3">—</div><div class="kpi-lbl">Avg Weekly Hours</div></div>
+      <div class="kpi"><div class="kpi-val" id="wk-hit45" style="color:#4CAF50">—</div><div class="kpi-lbl">Hit ≥45h</div></div>
+      <div class="kpi"><div class="kpi-val" id="wk-miss45" style="color:#F44336">—</div><div class="kpi-lbl">Below 45h</div></div>
+      <div class="kpi"><div class="kpi-val" id="wk-hit6" style="color:#4CAF50">—</div><div class="kpi-lbl">≥6 Days (incl. leave)</div></div>
+      <div class="kpi"><div class="kpi-val" id="wk-miss6" style="color:#F44336">—</div><div class="kpi-lbl">&lt;6 Days</div></div>
+      <div class="kpi"><div class="kpi-val" id="wk-rdwk" style="color:#9C27B0">—</div><div class="kpi-lbl">Rest on Weekend</div></div>
+    </div>
+    <div class="tbl-wrap" style="margin-bottom:12px"><div class="tbl-scroll">
+      <table class="stbl"><thead><tr>
+        <th>Branch</th><th>Week</th><th>Emp</th>
+        <th>Avg Hours</th><th>≥45h</th><th>&lt;45h</th>
+        <th>≥6 Days</th><th>&lt;6 Days</th><th>Rest on Wknd</th>
+      </tr></thead><tbody id="wk-branch-body"></tbody></table>
+    </div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+      <div style="font-size:12px;font-weight:600;color:#495057">Employee detail</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn" id="wkf-all" onclick="wkFilter('')">All</button>
+        <button class="btn" id="wkf-miss45" onclick="wkFilter('miss45')">Below 45h only</button>
+        <button class="btn" id="wkf-miss6" onclick="wkFilter('miss6')">&lt;6 Days only</button>
+        <button class="btn" id="wkf-no_rdwk" onclick="wkFilter('no_rdwk')">No weekend rest</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><div class="tbl-scroll">
+      <table class="stbl"><thead><tr>
+        <th onclick="sortWkEmp('name',this)">Employee <span class="sa" id="wks-name"></span></th>
+        <th onclick="sortWkEmp('dg',this)">Designation <span class="sa" id="wks-dg"></span></th>
+        <th onclick="sortWkEmp('br',this)">Branch <span class="sa" id="wks-br"></span></th>
+        <th onclick="sortWkEmp('dp',this)">Dept <span class="sa" id="wks-dp"></span></th>
+        <th onclick="sortWkEmp('wk',this)">Week <span class="sa" id="wks-wk"></span></th>
+        <th onclick="sortWkEmp('hrs',this)">Total Hours <span class="sa" id="wks-hrs"></span></th>
+        <th onclick="sortWkEmp('d6',this)">Days (6-rule) <span class="sa" id="wks-d6"></span></th>
+        <th onclick="sortWkEmp('pres',this)">Present <span class="sa" id="wks-pres"></span></th>
+        <th onclick="sortWkEmp('lv',this)">Leave <span class="sa" id="wks-lv"></span></th>
+        <th onclick="sortWkEmp('sp',this)">SP <span class="sa" id="wks-sp"></span></th>
+        <th onclick="sortWkEmp('abs',this)">Absent <span class="sa" id="wks-abs"></span></th>
+        <th onclick="sortWkEmp('rw',this)">Rest on Wknd <span class="sa" id="wks-rw"></span></th>
+      </tr></thead><tbody id="wk-emp-body"></tbody></table>
+    </div></div>
+  </div>
+
+  <!-- DAILY HEATMAP -->
+  <div class="pane" id="pane-daily">
+    <div class="heat-wrap"><div class="heat-scroll">
+      <table class="htbl"><thead id="heat-head"></thead><tbody id="heat-body"></tbody></table>
+    </div></div>
+  </div>
+
+  <!-- ORG CHART -->
+  <div class="pane" id="pane-org">
+    <div id="org-out"><div class="no-data">Select a <strong>Branch</strong> or <strong>Department</strong> to view the org chart.</div></div>
+  </div>
+</div>
+<div class="footer">Attendance Dashboard · <span id="gen-footer"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="data_loginv.js"></script>
+<script>
+var shiftOn=false,curTab='summary',sortCol='dept',sortAsc=true,dateMode='month';
+var selDepts=[],selBranches=[],selDesigs=[],wkDrillFilter='';
+var DOW=['Su','Mo','Tu','We','Th','Fr','Sa'];
+var SC_LBL={P:'P',PL:'P*',SP:'SP',L:'L',A:'A',N:'',W:'W',R:'R'};
+
+var dashboardReady=false;
+function initDashboard(){
+  if(dashboardReady) return;
+  dashboardReady=true;
+  document.getElementById('gen-time').textContent='Data: '+D.generated;
+  document.getElementById('gen-footer').textContent=D.generated;
+  var ys=document.getElementById('f-year');
+  ys.innerHTML='<option value="">(All)</option>';
+  D.years.forEach(function(y){var o=document.createElement('option');o.value=y;o.textContent=y;ys.appendChild(o);});
+  var ms=document.getElementById('f-month');
+  ms.innerHTML='<option value="">(All)</option>';
+  D.months.forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=m;ms.appendChild(o);});
+  var ws=document.getElementById('f-week');
+  ws.innerHTML='<option value="">(All)</option>';
+  D.weeks.forEach(function(w){var o=document.createElement('option');o.value=w;o.textContent=D.week_labels[String(w)]||('W'+w);ws.appendChild(o);});
+  buildMsList('ms-dept',D.departments,selDepts,'departments');
+  buildMsList('ms-branch',D.branches,selBranches,'branches');
+  buildMsList('ms-desig',D.designations,selDesigs,'designations');
+  document.getElementById('wkf-all').classList.add('btn-dark');
+  renderSummary();
+}
+
+function buildMsList(w,items,sel,type){
+  var list=document.getElementById(w+'-list');
+  var html='<div class="ms-item select-all" onclick="msToggleAll(\''+w+'\',\''+type+'\')"><input type="checkbox" id="'+w+'-all"> Select all</div>';
+  items.forEach(function(item,i){html+='<div class="ms-item" onclick="msToggle(\''+w+'\','+i+',\''+type+'\')"><input type="checkbox" id="'+w+'-'+i+'"> '+item+'</div>';});
+  list.innerHTML=html;
+}
+function getMsItems(t){return t==='departments'?D.departments:t==='branches'?D.branches:D.designations;}
+function getMsSel(t){return t==='departments'?selDepts:t==='branches'?selBranches:selDesigs;}
+function msToggle(w,i,t){
+  var items=getMsItems(t),sel=getMsSel(t),val=items[i];
+  var cb=document.getElementById(w+'-'+i);cb.checked=!cb.checked;
+  if(cb.checked){if(sel.indexOf(val)<0)sel.push(val);}else{var x=sel.indexOf(val);if(x>=0)sel.splice(x,1);}
+  updateMsBtn(w,sel,t);applyFilters();
+}
+function msToggleAll(w,t){
+  var items=getMsItems(t),sel=getMsSel(t),ac=document.getElementById(w+'-all');
+  ac.checked=!ac.checked;
+  items.forEach(function(item,i){var cb=document.getElementById(w+'-'+i);if(cb)cb.checked=ac.checked;});
+  sel.length=0;if(ac.checked)items.forEach(function(x){sel.push(x);});
+  updateMsBtn(w,sel,t);applyFilters();
+}
+function updateMsBtn(w,sel,t){
+  var lbl=document.getElementById(w+'-label'),badge=document.getElementById(w+'-badge');
+  var btn=document.querySelector('#'+w+' .ms-btn');
+  if(!sel.length){lbl.textContent='All';badge.style.display='none';btn.classList.remove('active');}
+  else if(sel.length===1){lbl.textContent=sel[0];badge.style.display='none';btn.classList.add('active');}
+  else{lbl.textContent=sel.length+' sel';badge.textContent=sel.length;badge.style.display='';btn.classList.add('active');}
+}
+function filterMsSearch(inp,w){
+  var q=inp.value.toLowerCase();
+  document.querySelectorAll('#'+w+'-list .ms-item:not(.select-all)').forEach(function(el){el.style.display=el.textContent.toLowerCase().includes(q)?'':'none';});
+}
+function toggleMs(w){var dd=document.getElementById(w+'-dd'),open=dd.classList.contains('open');closeAllDd();if(!open)dd.classList.add('open');}
+function toggleExportMenu(){var dd=document.getElementById('export-dd'),open=dd.classList.contains('open');closeAllDd();if(!open)dd.classList.add('open');}
+function closeAllDd(){document.querySelectorAll('.ms-dropdown,.export-dd').forEach(function(d){d.classList.remove('open');});}
+document.addEventListener('click',function(e){if(!e.target.closest('.ms-wrap')&&!e.target.closest('.export-menu'))closeAllDd();});
+
+function setDateMode(mode,el){
+  dateMode=mode;
+  document.querySelectorAll('.date-tab').forEach(function(t){t.classList.remove('active');});el.classList.add('active');
+  document.querySelectorAll('.date-subfilter').forEach(function(sf){sf.classList.remove('visible');});
+  if(mode!=='year'){var sf=document.getElementById('sf-'+mode);if(sf)sf.classList.add('visible');}
+  applyFilters();
+}
+function getF(){
+  var yr=document.getElementById('f-year').value;
+  var mo=document.getElementById('f-month').value;
+  var qt=document.getElementById('f-quarter').value;
+  var wk=document.getElementById('f-week').value;
+  return{year:yr?parseInt(yr):null,month:mo,quarter:qt?parseInt(qt):null,
+         week:wk?parseInt(wk):null,depts:selDepts.slice(),branches:selBranches.slice(),desigs:selDesigs.slice()};
+}
+function matchF(f,r){
+  if(f.year    && r.Year      !==f.year)    return false;
+  if(f.month   && r.Month_Label!==f.month)  return false;
+  if(f.quarter && r.Quarter   !==f.quarter) return false;
+  if(f.week    && r.WeekNum   !==f.week)    return false;
+  if(f.depts.length   && r.dept   && f.depts.indexOf(r.dept)<0)    return false;
+  if(f.branches.length && r.branch && f.branches.indexOf(r.branch)<0) return false;
+  if(f.desigs.length  && r.desig  && f.desigs.indexOf(r.desig)<0)  return false;
+  return true;
+}
+function resetFilters(){
+  ['f-year','f-month','f-quarter','f-week'].forEach(function(id){document.getElementById(id).value='';});
+  selDepts.length=0;selBranches.length=0;selDesigs.length=0;
+  ['ms-dept','ms-branch','ms-desig'].forEach(function(w){
+    var t=w==='ms-dept'?'departments':w==='ms-branch'?'branches':'designations';
+    document.querySelectorAll('#'+w+'-list input').forEach(function(cb){cb.checked=false;});
+    updateMsBtn(w,[],t);
+  });
+  applyFilters();
+}
+function applyFilters(){
+  if(curTab==='summary')     renderSummary();
+  else if(curTab==='weekly') renderWeekly();
+  else if(curTab==='daily')  renderHeatmap();
+  else                       renderOrg();
+}
+function switchTab(tab,el){
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});el.classList.add('active');
+  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('pane-'+tab).classList.add('active');
+  document.getElementById('shift-wrap').style.display  =tab==='daily'?'flex':'none';
+  document.getElementById('heat-legend').style.display =tab==='daily'?'flex':'none';
+  document.getElementById('export-wrap').style.display =tab==='org'?'none':'';
+  applyFilters();
+}
+
+// ── SUMMARY ───────────────────────────────────────────────────────────────────
+function sortTable(col){
+  if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}
+  document.querySelectorAll('.sa').forEach(function(e){e.textContent='';});
+  var a=document.getElementById('s-'+col);if(a)a.textContent=sortAsc?'▲':'▼';
+  renderSummary();
+}
+function renderSummary(){
+  var f=getF();
+  // Use week-level summary only when week mode is active (avoids splitting same group into 5 rows)
+  var pool = (dateMode==='week') ? D.summary_wk : D.summary;
+  var rows=pool.filter(function(r){return matchF(f,r);});
+  rows.sort(function(a,b){
+    var av=a[sortCol]||'',bv=b[sortCol]||'';
+    return typeof av==='string'?(sortAsc?String(av).localeCompare(String(bv)):String(bv).localeCompare(String(av))):(sortAsc?av-bv:bv-av);
+  });
+  var totWD=0,totP=0,totL=0,totSP=0,totLv=0,totEmp=0,totAbs=0;
+  rows.forEach(function(r){totWD+=r.wd;totP+=r.present;totL+=r.late;totSP+=r.sp;totLv+=r.leave;totEmp+=r.emp;totAbs+=(r.absent||0);});
+  document.getElementById('k-emp').textContent   =totEmp.toLocaleString();
+  document.getElementById('k-att').textContent   =totWD>0?(totP/totWD*100).toFixed(1)+'%':'—';
+  document.getElementById('k-absent').textContent=totAbs.toLocaleString();
+  document.getElementById('k-late').textContent  =totL.toLocaleString();
+  document.getElementById('k-sp').textContent    =totSP.toLocaleString();
+  document.getElementById('k-leave').textContent =totLv.toLocaleString();
+  document.getElementById('k-wd').textContent    =totWD.toLocaleString();
+  var html='';
+  if(!rows.length)html='<tr><td colspan="12" class="no-data">No data for selected filters.</td></tr>';
+  else rows.forEach(function(r){
+    var cls=r.att>=80?'hi':r.att>=60?'mid':'lo';
+    var period=dateMode==='week'?(D.week_labels[String(r.WeekNum)]||'W'+r.WeekNum):
+               dateMode==='quarter'?'Q'+r.Quarter+' '+r.Year:
+               dateMode==='year'?String(r.Year):r.Month_Label;
+    html+='<tr><td>'+r.dept+'</td><td>'+r.branch+'</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">'+r.desig+'</td><td>'+period+'</td><td>'+r.emp+'</td><td>'+r.wd+'</td><td>'+r.present+'</td><td>'+(r.absent||0)+'</td><td>'+r.late+'</td><td>'+r.sp+'</td><td>'+r.leave+'</td><td><span class="ap '+cls+'">'+r.att+'%</span></td></tr>';
+  });
+  document.getElementById('sum-body').innerHTML=html;
+}
+
+// ── WEEKLY ANALYSIS ───────────────────────────────────────────────────────────
+// emp row indices: [empId, weekNum, branch, dept, hrs, present, leave, sp, absent, days6, rest_wknd]
+var IDX={id:0,wk:1,br:2,dp:3,dg:4,hrs:5,pres:6,lv:7,sp:8,abs:9,d6:10,rw:11};
+
+function wkFilter(type){
+  wkDrillFilter=type;
+  document.querySelectorAll('[id^="wkf-"]').forEach(function(b){b.classList.remove('btn-dark');});
+  document.getElementById('wkf-'+(type||'all')).classList.add('btn-dark');
+  renderWeeklyEmpTable(getFilteredEmpWeek());
+}
+function getFilteredEmpWeek(){
+  var f=getF();
+  return D.weekly_emp.filter(function(r){
+    if(f.week    && r[IDX.wk]!==f.week)              return false;
+    if(f.branches.length && f.branches.indexOf(r[IDX.br])<0) return false;
+    if(f.depts.length    && f.depts.indexOf(r[IDX.dp])<0)    return false;
+    if(wkDrillFilter==='miss45'  && r[IDX.hrs]>=45)  return false;
+    if(wkDrillFilter==='miss6'   && r[IDX.d6]>=6)    return false;
+    if(wkDrillFilter==='no_rdwk' && r[IDX.rw]>0)     return false;
+    return true;
+  });
+}
+function renderWeekly(){
+  var f=getF();
+  var brows=D.weekly_branch.filter(function(r){
+    if(f.week    && r.WeekNum!==f.week)              return false;
+    if(f.branches.length && f.branches.indexOf(r.branch)<0) return false;
+    return true;
+  });
+  var totEmp=0,sumHrs=0,hit45=0,miss45=0,hit6=0,miss6=0,rdwk=0;
+  brows.forEach(function(r){totEmp+=r.emp;sumHrs+=r.avg_hrs*r.emp;hit45+=r.hit45;miss45+=r.miss45;hit6+=r.hit6days;miss6+=r.miss6days;rdwk+=r.rest_wknd;});
+  document.getElementById('wk-emp').textContent    =totEmp.toLocaleString();
+  document.getElementById('wk-avg-hrs').textContent=totEmp>0?(sumHrs/totEmp).toFixed(1)+'h':'—';
+  document.getElementById('wk-hit45').textContent  =hit45.toLocaleString();
+  document.getElementById('wk-miss45').textContent =miss45.toLocaleString();
+  document.getElementById('wk-hit6').textContent   =hit6.toLocaleString();
+  document.getElementById('wk-miss6').textContent  =miss6.toLocaleString();
+  document.getElementById('wk-rdwk').textContent   =rdwk.toLocaleString();
+  var bhtml='';
+  if(!brows.length)bhtml='<tr><td colspan="9" class="no-data">Select a week filter to see branch breakdown.</td></tr>';
+  else brows.sort(function(a,b){return a.branch.localeCompare(b.branch);}).forEach(function(r){
+    var wklbl=D.week_labels[String(r.WeekNum)]||('W'+r.WeekNum);
+    var hpct=r.emp>0?Math.round(r.hit45/r.emp*100):0, dpct=r.emp>0?Math.round(r.hit6days/r.emp*100):0;
+    bhtml+='<tr><td>'+r.branch+'</td><td>'+wklbl+'</td><td>'+r.emp+'</td><td>'+r.avg_hrs+'h</td>';
+    bhtml+='<td><span class="ap '+(hpct>=80?'gr':hpct>=60?'am':'rd')+'">'+r.hit45+'</span></td><td>'+r.miss45+'</td>';
+    bhtml+='<td><span class="ap '+(dpct>=80?'gr':dpct>=60?'am':'rd')+'">'+r.hit6days+'</span></td><td>'+r.miss6days+'</td><td>'+r.rest_wknd+'</td></tr>';
+  });
+  document.getElementById('wk-branch-body').innerHTML=bhtml;
+  renderWeeklyEmpTable(getFilteredEmpWeek());
+}
+var wkSortCol='name', wkSortAsc=true;
+function sortWkEmp(col,el){
+  if(wkSortCol===col) wkSortAsc=!wkSortAsc; else{wkSortCol=col;wkSortAsc=true;}
+  document.querySelectorAll('[id^="wks-"]').forEach(function(e){e.textContent='';});
+  var sa=document.getElementById('wks-'+col); if(sa) sa.textContent=wkSortAsc?'▲':'▼';
+  renderWeeklyEmpTable(getFilteredEmpWeek());
+}
+function renderWeeklyEmpTable(empRows){
+  // Apply sort
+  var col=wkSortCol, asc=wkSortAsc;
+  empRows=empRows.slice().sort(function(a,b){
+    var av,bv;
+    if(col==='name'){av=D.emp_names[a[IDX.id]]||'';bv=D.emp_names[b[IDX.id]]||'';}
+    else if(col==='dg'){av=a[IDX.dg]||'';bv=b[IDX.dg]||'';}
+    else if(col==='br'){av=a[IDX.br];bv=b[IDX.br];}
+    else if(col==='dp'){av=a[IDX.dp];bv=b[IDX.dp];}
+    else if(col==='wk'){av=a[IDX.wk];bv=b[IDX.wk];}
+    else av=a[IDX[col]]||0, bv=b[IDX[col]]||0;
+    if(typeof av==='string') return asc?av.localeCompare(bv):bv.localeCompare(av);
+    return asc?av-bv:bv-av;
+  });
+  var MAX=300,html='';
+  if(!empRows.length)html='<tr><td colspan="12" class="no-data">No employees match the selected filters.</td></tr>';
+  else empRows.slice(0,MAX).forEach(function(r){
+    var name=D.emp_names[r[IDX.id]]||r[IDX.id];
+    var hcls=r[IDX.hrs]>=45?'gr':r[IDX.hrs]>=35?'am':'rd';
+    var dcls=r[IDX.d6]>=6?'gr':r[IDX.d6]>=4?'am':'rd';
+    var wklbl=D.week_labels[String(r[IDX.wk])]||('W'+r[IDX.wk]);
+    html+='<tr><td>'+name+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis">'+r[IDX.dg]+'</td>';
+    html+='<td>'+r[IDX.br]+'</td><td>'+r[IDX.dp]+'</td><td>'+wklbl+'</td>';
+    html+='<td><span class="ap '+hcls+'">'+r[IDX.hrs]+'h</span></td>';
+    html+='<td><span class="ap '+dcls+'">'+r[IDX.d6]+' days</span></td>';
+    html+='<td>'+r[IDX.pres]+'</td><td>'+r[IDX.lv]+'</td><td>'+r[IDX.sp]+'</td><td>'+r[IDX.abs]+'</td>';
+    html+='<td>'+(r[IDX.rw]?'✅':'—')+'</td></tr>';
+  });
+  if(empRows.length>MAX)html+='<tr><td colspan="11" style="text-align:center;font-size:11px;color:#868e96;padding:8px">Showing '+MAX+' of '+empRows.length+' — filter further to narrow down.</td></tr>';
+  document.getElementById('wk-emp-body').innerHTML=html;
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+function toggleShift(){
+  shiftOn=!shiftOn;
+  document.getElementById('shift-tog').classList.toggle('on',shiftOn);
+  document.getElementById('shift-lbl').textContent=shiftOn?'On':'Off';
+  document.querySelectorAll('.hl').forEach(function(el){el.style.display=shiftOn?'block':'none';});
+  document.querySelectorAll('.shift-hdr').forEach(function(tr){tr.style.display=shiftOn?'':'none';});
+}
+function renderHeatmap(){
+  var f=getF();
+  var monthsToShow=[],dayCols=[];
+  if(dateMode==='week'&&f.week){
+    Object.keys(D.week_day_map).forEach(function(month){
+      var wdays=D.week_day_map[month][String(f.week)];if(!wdays)return;
+      if(monthsToShow.indexOf(month)<0)monthsToShow.push(month);
+      var cfg=D.month_cfg[month]||{days:31,start:0};
+      wdays.forEach(function(day){
+        var d=parseInt(day),dow=(cfg.start+d-1)%7;
+        dayCols.push({month:month,day:day,dow:dow,label:day+' '+month.split(' ')[0]});
+      });
+    });
+    dayCols.sort(function(a,b){var mi=D.months.indexOf(a.month)-D.months.indexOf(b.month);return mi!==0?mi:a.day.localeCompare(b.day);});
+  } else {
+    var month=f.month;
+    if(!month){
+      for(var i=0;i<D.months.length;i++){
+        var m=D.months[i];
+        if(f.year){var yr=parseInt(m.split(' ')[1])+2000;if(yr!==f.year)continue;}
+        if(f.quarter){var mn2={'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}[m.split(' ')[0]];if(Math.ceil(mn2/3)!==f.quarter)continue;}
+        month=m;break;
+      }
+      if(!month)month=D.months[0];
+      document.getElementById('f-month').value=month;
+    }
+    monthsToShow=[month];
+    var cfg=D.month_cfg[month]||{days:31,start:0};
+    for(var d=1;d<=cfg.days;d++){
+      var ds=('0'+d).slice(-2),dow=(cfg.start+d-1)%7;
+      dayCols.push({month:month,day:ds,dow:dow,label:ds});
+    }
+  }
+  if(!dayCols.length){document.getElementById('heat-head').innerHTML='';document.getElementById('heat-body').innerHTML='<tr><td colspan="3" class="no-data">No data.</td></tr>';return;}
+
+  // Collect employees from attendance data (D.heat)
+  var empMap={};
+  monthsToShow.forEach(function(month){
+    Object.keys(D.heat).forEach(function(branch){
+      if(f.branches.length&&f.branches.indexOf(branch)<0)return;
+      var mData=D.heat[branch][month];if(!mData)return;
+      Object.keys(mData).forEach(function(id){
+        var e=mData[id];
+        if(f.depts.length  &&f.depts.indexOf(e.d)<0) return;
+        if(f.desigs.length &&f.desigs.indexOf(e.dg)<0)return;
+        if(!empMap[id])empMap[id]={id:id,name:e.n,dept:e.d,desig:e.dg,branch:branch,days:{}};
+        Object.keys(e.days).forEach(function(day){empMap[id].days[month+'|'+day]=e.days[day];});
+      });
+    });
+  });
+
+  // Merge future roster (D.roster_heat) — only fills days NOT already in attendance
+  if(D.roster_heat){
+    monthsToShow.forEach(function(month){
+      Object.keys(D.roster_heat).forEach(function(branch){
+        if(f.branches.length&&f.branches.indexOf(branch)<0)return;
+        var mData=D.roster_heat[branch][month];if(!mData)return;
+        Object.keys(mData).forEach(function(id){
+          var e=mData[id];
+          if(f.depts.length  &&f.depts.indexOf(e.d)<0) return;
+          if(f.desigs.length &&f.desigs.indexOf(e.dg)<0)return;
+          // Add employee to map if not already there (from attendance)
+          if(!empMap[id])empMap[id]={id:id,name:e.n,dept:e.d,desig:e.dg,branch:branch,days:{}};
+          // Only add roster days that don't already have an attendance record
+          Object.keys(e.days).forEach(function(day){
+            var key=month+'|'+day;
+            if(!empMap[id].days[key]) empMap[id].days[key]=e.days[day];
+          });
+        });
+      });
+    });
+  }
+
+  var emps=Object.entries(empMap).map(function(e){return Object.assign({id:e[0]},e[1]);}).sort(function(a,b){return a.name.localeCompare(b.name);});
+
+  // Shift headcount from visible employees only (respects all filters)
+  // Count P, PL, SP (actual attendance) + W (roster scheduled work days)
+  var hcData={};
+  Object.values(empMap).forEach(function(emp){
+    Object.keys(emp.days).forEach(function(key){
+      var day=emp.days[key];
+      if(!day.sh) return;
+      if(['P','PL','SP','W'].indexOf(day.sc)<0) return;
+      if(!hcData[key]) hcData[key]={};
+      hcData[key][day.sh]=(hcData[key][day.sh]||0)+1;
+    });
+  });
+  // All unique shifts across visible columns
+  var allShifts={};
+  dayCols.forEach(function(col){var k=col.month+'|'+col.day;if(hcData[k])Object.keys(hcData[k]).forEach(function(sl){allShifts[sl]=1;});});
+  var shiftList=Object.keys(allShifts).sort();
+
+  // Header row
+  var hh='<tr><th class="hcol-name">Employee</th><th class="hcol-info">Dept · Designation · Branch</th>';
+  dayCols.forEach(function(col){
+    var wk=col.dow===0||col.dow===6;
+    hh+='<th class="hdc'+(wk?' wk':'')+'"><div class="hdn">'+col.label+'</div><div class="hdw">'+DOW[col.dow]+'</div></th>';
+  });
+  hh+='</tr>';
+  document.getElementById('heat-head').innerHTML=hh;
+
+  // Shift header rows (hidden by default, shown when shiftOn)
+  var bodyHtml='';
+  shiftList.forEach(function(sl){
+    var slLbl=sl.replace(/^(\d{2})(\d{2})-(\d{2})(\d{2})$/,'$1:$2-$3:$4');
+    bodyHtml+='<tr class="shift-hdr" style="display:'+(shiftOn?'':'none')+'">';
+    bodyHtml+='<td class="hcol-name" style="font-size:9px;font-weight:700;color:#3d5afe;background:#f0f4ff;border-bottom:1px solid #e3e8ff">⏰ '+slLbl+'</td>';
+    bodyHtml+='<td class="hcol-info" style="font-size:8px;color:#9fa8da;background:#f0f4ff;border-bottom:1px solid #e3e8ff">headcount</td>';
+    dayCols.forEach(function(col){
+      var k=col.month+'|'+col.day, cnt=(hcData[k]&&hcData[k][sl])||0, wk=col.dow===0||col.dow===6;
+      bodyHtml+='<td class="shift-hc'+(cnt===0?' empty':'')+(wk?' wk':'')+'">'+(cnt||'')+'</td>';
+    });
+    bodyHtml+='</tr>';
+  });
+
+  // Employee rows
+  if(!emps.length){
+    bodyHtml+='<tr><td colspan="'+(dayCols.length+2)+'" class="no-data">Select a branch to view the heatmap.</td></tr>';
+  } else {
+    var mMap={'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'};
+    emps.forEach(function(emp){
+      var doj=D.doj_map[emp.id]||null;
+      var doe=D.doe_map[emp.id]||null;
+      bodyHtml+='<tr><td class="hcol-name" title="'+emp.name+(doj?' · Joined '+doj:'')+(doe?' · Left '+doe:'')+'">'
+        +emp.name
+        +(doj&&doj>='2026-01-01'?'<span style="font-size:8px;color:#9C27B0;margin-left:3px">▶'+doj.slice(5)+'</span>':'')
+        +(doe?'<span style="font-size:8px;color:#78909c;margin-left:3px">◀'+doe.slice(5)+'</span>':'')
+        +'</td>';
+      bodyHtml+='<td class="hcol-info">'+emp.dept+'<span>'+emp.desig+'</span><span style="color:#74b9ff">'+emp.branch+'</span></td>';
+      dayCols.forEach(function(col){
+        var key=col.month+'|'+col.day, wk=col.dow===0||col.dow===6;
+        var day=emp.days[key], s, sh='', lbl='';
+        if(day){
+          s=day.sc||'N'; sh=day.sh||''; lbl=SC_LBL[s]||'';
+        } else {
+          var mp=col.month.split(' '); var yr='20'+mp[1]; var mn=mMap[mp[0]]||'01';
+          var cellDate=yr+'-'+mn+'-'+col.day;
+          if(doj && cellDate < doj)      s='PRE';
+          else if(doe && cellDate > doe) s='POST';
+          else                           s='N';
+        }
+        var isOff=s==='N'||s==='PRE'||s==='POST';
+        var tip=col.label+(s==='PRE'?' · Not yet joined':s==='POST'?' · Already left':s==='N'?'':' · '+s)+(sh?' · '+sh:'');
+        bodyHtml+='<td class="tdc '+s+(wk&&isOff?' wk':'')+'" title="'+tip+'">';
+        bodyHtml+='<div class="ci"><span class="sl">'+lbl+'</span><span class="hl" style="display:'+(shiftOn?'block':'none')+'">'+sh+'</span></div></td>';
+      });
+      bodyHtml+='</tr>';
+    });
+  }
+  document.getElementById('heat-body').innerHTML=bodyHtml;
+}
+
+// ── ORG CHART ─────────────────────────────────────────────────────────────────
+var orgMap={};D.org.forEach(function(e){orgMap[e['Employee Id']]=e;});
+var collapsedNodes={};
+function getChildren(pid,allIds){
+  return D.org.filter(function(e){return e.mgr_id===pid&&e['Employee Id']!==pid&&allIds.has(e['Employee Id']);})
+    .sort(function(a,b){return a.name.localeCompare(b.name);});
+}
+function renderNode(emp,level,allIds){
+  var ch=getChildren(emp['Employee Id'],allIds),hasKids=ch.length>0;
+  var ac=emp.att>=80?'hi':emp.att>=60?'mid':'lo',lv=Math.min(level,3);
+  var isCol=!!collapsedNodes[emp['Employee Id']];
+  var html='<div class="tree-col" id="nd-'+emp['Employee Id']+'">';
+  html+='<div class="tree-col-connector" style="'+(level===0?'display:none':'')+'"></div>';
+  html+='<div class="org-card lv'+lv+(hasKids?' has-ch':'')+'"'+(hasKids?' onclick="toggleOrgNode(\''+emp['Employee Id']+'\')"':'')+' title="'+emp.desig+'">';
+  html+='<div class="oc-name">'+emp.name+'</div><div class="oc-desig">'+emp.desig+'</div>';
+  html+='<div class="oc-att '+ac+'">'+emp.att.toFixed(1)+'%</div>';
+  html+='<div class="oc-meta"><span class="oc-badge">'+emp.late+' late</span><span class="oc-badge">'+(emp.wd||0)+' days</span></div>';
+  if(hasKids)html+='<div class="toggle-ch">'+(isCol?'+':ch.length)+'</div>';
+  html+='</div>';
+  if(hasKids&&!isCol){
+    html+='<div class="tree-col-connector"></div>';
+    html+='<div style="position:relative;display:flex;justify-content:center">';
+    if(ch.length>1)html+='<div style="position:absolute;top:0;left:0;right:0;height:1px;background:#dee2e6"></div>';
+    html+='<div style="display:flex;gap:14px;">';
+    ch.forEach(function(c){html+=renderNode(c,level+1,allIds);});
+    html+='</div></div>';
+  }
+  return html+'</div>';
+}
+function toggleOrgNode(id){collapsedNodes[id]=!collapsedNodes[id];renderOrg();}
+function renderOrg(){
+  var f=getF();
+  var filtered=D.org.filter(function(e){
+    if(f.branches.length&&f.branches.indexOf(e.branch)<0)return false;
+    if(f.depts.length&&f.depts.indexOf(e.dept)<0)return false;
+    if(f.desigs.length&&f.desigs.indexOf(e.desig)<0)return false;
+    return true;
+  });
+  var out=document.getElementById('org-out');
+  if(!filtered.length){out.innerHTML='<div class="no-data">No employees found.</div>';return;}
+  if(filtered.length>250){out.innerHTML='<div class="no-data">'+filtered.length+' employees — filter by <strong>Branch</strong> or <strong>Dept</strong> (max 250 for chart view).</div>';return;}
+  var allIds=new Set(filtered.map(function(e){return e['Employee Id'];}));
+  var roots=filtered.filter(function(e){return !allIds.has(e.mgr_id);}).sort(function(a,b){return a.name.localeCompare(b.name);});
+  var html='<div class="org-scroll"><div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;padding:8px">';
+  roots.forEach(function(r){html+=renderNode(r,0,allIds);});
+  out.innerHTML=html+'</div></div>';
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function doExport(fmt){
+  closeAllDd();
+  var f=getF(),rows=D.summary.filter(function(r){return matchF(f,r);});
+  var data=[['Dept','Branch','Designation','Period','Emp','WD','Present','Absent','Late','SP','Leave','Att%']];
+  rows.forEach(function(r){
+    var period=dateMode==='week'?(D.week_labels[String(r.WeekNum)]||'W'+r.WeekNum):
+               dateMode==='quarter'?'Q'+r.Quarter+' '+r.Year:
+               dateMode==='year'?String(r.Year):r.Month_Label;
+    data.push([r.dept,r.branch,r.desig,period,r.emp,r.wd,r.present,r.absent||0,r.late,r.sp,r.leave,r.att]);
+  });
+  if(fmt==='csv'){
+    var csv=data.map(function(row){return row.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='summary.csv';a.click();
+  } else {
+    if(typeof XLSX==='undefined'){alert('Loading...');return;}
+    var ws=XLSX.utils.aoa_to_sheet(data),wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Summary');XLSX.writeFile(wb,'summary.xlsx');
+  }
+}
+</script>
+</body>
+</html>
